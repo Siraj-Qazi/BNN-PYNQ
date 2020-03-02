@@ -7,32 +7,32 @@ if __name__ == "__main__":
 
     bnnRoot = "."
     npzFile = bnnRoot + "/weights/resnetXT-w1a1.npz"
-    targetDirBin = bnnRoot + "/binparam-cnvW1A1-pynq-resnetXT"
-    targetDirHLS = bnnRoot + "/binparam-cnvW1A1-pynq-resnetXT/hw"
+    targetDirBin = bnnRoot + "/cnvW1A1-resnetXT-cifar10"
+    targetDirHLS = bnnRoot + "/cnvW1A1-resnetXT-cifar10/hw"
     
     num_classes = 10
-    conv_layers = 5
+    conv_layers = 9
     fc_layers = 2
 
     #topology of convolutional layers (only for config.h defines)
-    ifm       = [28, 14,  14,  14,  14]
-    ofm       = [28, 14,  14,  14,  14]   
-    ifm_ch    = [ 1, 64,  64, 64, 64]
-    ofm_ch    = [64, 64, 64, 64, 64]   
-    filterDim = [ 3,  3,  3,  3,  3]
+    ifm       = [32, 16,  16,  16,  16, 16, 16, 16, 16]
+    ofm       = [32, 16,  16,  16,  16, 16, 16, 16, 16]   
+    ifm_ch    = [3, 64, 64, 64, 64, 64, 64, 64, 64]
+    ofm_ch    = [64, 64, 64, 64, 64,64, 64, 64, 64]   
+    filterDim = [ 3, 3, 3, 3, 3, 3, 3, 3, 3]
 
-    WeightsPrecisions_fractional =    [0 , 0 , 0 , 0 , 0 , 0 , 0]
-    ActivationPrecisions_fractional = [0 , 0 , 0 , 0 , 0 , 0 , 0]
-    InputPrecisions_fractional =      [7 , 0 , 0 , 0 , 0 , 0 , 0]
-    WeightsPrecisions_integer =       [1 , 1 , 1 , 1 , 1 , 1 , 1]
-    ActivationPrecisions_integer =    [1 , 1 , 1 , 1 , 1 , 1 ,16]
-    InputPrecisions_integer =         [1 , 1 , 1 , 1 , 1 , 1 , 1]
+    WeightsPrecisions_fractional =    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ActivationPrecisions_fractional = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    InputPrecisions_fractional =      [7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    WeightsPrecisions_integer =       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ActivationPrecisions_integer =    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 16]
+    InputPrecisions_integer =         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
-    classes = [str(x) for x in range(10)]
+    classes = ['Airplane', 'Automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck']
     
     #configuration of PE and SIMD counts
-    peCounts =    [64, 64, 64, 64, 64, 32, 32]
-    simdCounts =  [ 1, 64, 64, 64, 64, 32, 1]
+    peCounts =    [16, 32, 32, 32, 32, 32, 32, 32, 32, 4, 4]
+    simdCounts =  [3, 32, 32, 32, 32, 32, 32, 32, 16, 8, 1]
 
 
     if not os.path.exists(targetDirBin):
