@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
+import torchvision
 from torch.autograd import Variable
 from binarized_modules import *
 # Training settings
@@ -50,26 +51,39 @@ class resnet_module(nn.Module):
         x += residual
         return x
 
-class Resnet(nn.Module):
+class ResnetXT(nn.Module):
     def __init__(self):
-        super(Resnet, self).__init__()
+        super(ResnetXT, self).__init__()
         self.features = nn.Sequential(
-            BinarizeConv2d(args.wb, 1, 64, kernel_size=3, stride=1, padding=1, bias=True),
+            BinarizeConv2d(args.wb, 3, 64, kernel_size=3, stride=1, padding=1, bias=True),
             nn.BatchNorm2d(64),
             nn.Hardtanh(inplace=True),
             Quantizer(args.ab),
             nn.MaxPool2d(kernel_size=2, stride=2),
 
             resnet_module(),
-            resnet_module(),
-
             nn.BatchNorm2d(64),
             nn.Hardtanh(inplace=True),
             Quantizer(args.ab),
-        	nn.MaxPool2d(kernel_size=2, stride=2))
+
+            resnet_module(),
+            nn.BatchNorm2d(64),
+            nn.Hardtanh(inplace=True),
+            Quantizer(args.ab),
+
+            resnet_module(),
+            nn.BatchNorm2d(64),
+            nn.Hardtanh(inplace=True),
+            Quantizer(args.ab),
+
+            resnet_module(),
+            nn.BatchNorm2d(64),
+            nn.Hardtanh(inplace=True),
+            Quantizer(args.ab),
+        	  nn.MaxPool2d(kernel_size=2, stride=2))
 
         self.classifier = nn.Sequential(
-            BinarizeLinear(args.wb, 7*7*64, 1024, bias=True),
+            BinarizeLinear(args.wb, 8*8*64, 1024, bias=True),
             nn.BatchNorm1d(1024),
             nn.Hardtanh(inplace=True),
             Quantizer(args.ab),
@@ -85,7 +99,7 @@ class Resnet(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(-1, 7*7*64)
+        x = x.view(-1, 8*8*64)
         x = self.classifier(x)
         return x
     
@@ -201,19 +215,23 @@ if __name__ == '__main__':
     if args.cuda:
     		torch.cuda.manual_seed(args.seed)
     kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
-    train_loader = torch.utils.data.DataLoader(datasets.MNIST('data', train=True, download=True,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.5,), (0.5,))
-                   ])),
-    	batch_size=args.batch_size, shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(datasets.MNIST('data', train=False, transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.5,), (0.5,))
-                   ])),
-    	batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    transform_train = transforms.Compose([transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
 
-    model = Resnet()
+    transform_test = transforms.Compose([transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                            download=True, transform=transform_train)
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
+                                               shuffle=True, **kwargs)
+
+    testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                           download=True, transform=transform_test)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size,
+                                              shuffle=False, **kwargs)
+
+    model = ResnetXT()
     if args.cuda:
     		torch.cuda.set_device(0)
     		model.cuda()
